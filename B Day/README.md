@@ -8,7 +8,7 @@ Before you begin, ensure you have the following set up:
 
 - [Ballistica Game Engine](https://github.com/efroemling/ballistica/): Install the Ballistica game engine to run and enjoy the BombSpawner game.
 
-- [Ballistica Cloud Console](https://tools.ballistica.net/devices/): Connect your game to the Ballistica Cloud Console to execute the game code.
+- [Ballistica Cloud Console](https://tools.ballistica.net/devices): Connect your game to the Ballistica Cloud Console to execute the game code.
 
 ## Setting Up the Game
 
@@ -24,7 +24,7 @@ make cmake
 
 ## Running the Mod
 
-1. **Connect to the Cloud Console**: Access the [Ballistica Cloud Console](https://tools.ballistica.net/devices/) and connect your game to it. This will allow you to execute the main code.
+1. **Connect to the Cloud Console**: Access the [Ballistica Cloud Console](https://tools.ballistica.net/devices) and connect your game to it. This will allow you to execute the main code.
 
 2. **Prepare the Spawning Environment**: Open the game and create a new game type `Birth Day` in a new Playlist. This is where the dynamic bomb arrangement will take place.
 
