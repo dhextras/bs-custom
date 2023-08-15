@@ -20,7 +20,7 @@ from bascenev1lib.actor.bomb import Bomb
 # Defining the main funciton for the gamemod plugin
 # ba_meta export bascenev1.GameActivity
 class MyFirstTry(bs.TeamGameActivity[bs.Player, bs.Team]):
-    name = 'Birth Day'
+    name = 'Birth Day Mod'
     description = ('Make your birthday wish with some cool animation with bombs\n')
     tips = ['Make em impressed..']
     
@@ -48,12 +48,12 @@ class MyFirstTry(bs.TeamGameActivity[bs.Player, bs.Team]):
                                     attrs={
                                         'v_attach': 'bottom',
                                         'h_attach': 'left',
-                                        'h_align': 'center',
-                                        'color': (),
+                                        'h_align': 'left',
+                                        'color': (1, 1, 1),
                                         'flatness': 0.5,
                                         'shadow': 0.5,
-                                        'position': (0, -70),
-                                        'scale': 1.5,
+                                        'position': (20, 10),
+                                        'scale': 1.0,
                                         'text': 'By DhextraS'
                                     })
 
