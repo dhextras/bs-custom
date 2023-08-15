@@ -7,7 +7,7 @@
 from typing import TYPE_CHECKING, Sequence
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Dict, Type, List, Optional, Union
+    pass
 
 # Necessory imports
 import random
@@ -20,9 +20,9 @@ from bascenev1lib.actor.bomb import Bomb
 # Defining the main funciton for the gamemod plugin
 # ba_meta export bascenev1.GameActivity
 class MyFirstTry(bs.TeamGameActivity[bs.Player, bs.Team]):
-    name = 'My First Try'
-    description = ('My first try to mod bombsquad\n')
-    tips = ['U sucks fucker']
+    name = 'Birth Day'
+    description = ('Make your birthday wish with some cool animation with bombs\n')
+    tips = ['Make em impressed..']
     
     # Difining the game mode to support on only freefor all sessions
     @classmethod
@@ -40,14 +40,22 @@ class MyFirstTry(bs.TeamGameActivity[bs.Player, bs.Team]):
     def __init__(self, settings: dict):
         super().__init__(settings)   
         self.settings = settings
-        self._bots = SpazBotSet()
-        self._bomb_ttl = int(40)
-        self._bomb_count = int(0)
 
     # Here is the main logic for this game where we spawn and make them move to make the words
     def on_begin(self) -> None:
         super().on_begin()
-        bs.timer(2, self._bomb_timer)
+        self.hdisplay = bs.newnode('text',
+                                    attrs={
+                                        'v_attach': 'bottom',
+                                        'h_attach': 'left',
+                                        'h_align': 'center',
+                                        'color': (),
+                                        'flatness': 0.5,
+                                        'shadow': 0.5,
+                                        'position': (0, -70),
+                                        'scale': 1.5,
+                                        'text': 'By DhextraS'
+                                    })
 
     # overiding the charector spawning to disable punch and bomb
     def spawn_player(self, player: bs.Player) -> bs.Actor:
@@ -57,21 +65,3 @@ class MyFirstTry(bs.TeamGameActivity[bs.Player, bs.Team]):
         spaz.connect_controls_to_player(enable_bomb = False, enable_punch = False)
 
         return spaz
-
-    # starting a timer for bomb throw to make it look cool instead of all falling at the same time
-    def _bomb_timer(self) -> None:
-        bs.timer(0.1, self._bomb_throw)
-
-    # Throwing the bombs on the field with the timing 
-    def _bomb_throw(self) -> None:
-        bs.timer(1, bs.Call(self._bomb, (0, 0, 1), (10, -3, 0)))
-        self._bomb_count += 1
-
-        if self._bomb_count < self._bomb_ttl:
-            self._bomb_timer()
-        else:
-            pass
-
-    # the actual bomb throwing
-    def _bomb(self, position: Sequence[float], velocity: Sequence[float]) -> None:
-        Bomb(position=position, velocity=velocity).autoretain()
