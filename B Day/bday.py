@@ -522,7 +522,7 @@ class BombSpawner:
                 
         else:
             # If all letters are generated, move used bombs outward
-            self.letter = list(self.letter_groups[0].upper()) if self.letter_groups else None
+            self.letter = list(self.letter_groups[0].strip().upper()) if self.letter_groups else None
             bs.timer(2.0, bs.Call(self._move_bombs_outwards, self.used_bombs, center_position=(0, 0.2, 0)))
     
     def _set_bomb_velocity(self, bomb, desired_position):
