@@ -1,6 +1,6 @@
 # BombSpawner Mod - Birthday Edition
 
-This project is a heartfelt gift for **someone special** on their birthday. It's a way to add a touch of creativity and excitement to the celebration. Unfortunately, due to unforeseen circumstances, I couldn't finish it in time for the birthday celebration. However, I'm making it open source now, hoping that you can find joy in tinkering with and enhancing this project.
+This project is a heartfelt gift for **someone special** on their birthday. It's a way to add a touch of creativity and excitement to the celebration. Unfortunately, due to unforeseen circumstances, I couldn't finish it in time for the birthday celebration. However, I'm making it avilable for everyone now, hoping that you can find joy in tinkering with and enhancing this project.
 
 ## Prerequisites
 
