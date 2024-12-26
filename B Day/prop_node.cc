@@ -2,6 +2,10 @@
 
 #include "ballistica/scene_v1/node/prop_node.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/support/area_of_interest.h"
@@ -100,13 +104,13 @@ void PropNode::SetIsAreaOfInterest(bool val) {
 void PropNode::Draw(base::FrameDef* frame_def) {
 #if !BA_HEADLESS_BUILD
 
-  // need our texture, mesh, and body to be present to draw..
-  if ((!mesh_.Exists()) || (!color_texture_.Exists()) || (!body_.Exists())) {
+  // We need a texture, mesh, and body to be present to draw.
+  if ((!mesh_.exists()) || (!color_texture_.exists()) || (!body_.exists())) {
     return;
   }
 
   base::ObjectComponent c(frame_def->beauty_pass());
-  c.SetTexture(color_texture_.Exists() ? color_texture_->texture_data()
+  c.SetTexture(color_texture_.exists() ? color_texture_->texture_data()
                                        : nullptr);
   c.SetLightShadow(base::LightShadowType::kObject);
   if (reflection_ != base::ReflectionType::kNone) {
@@ -114,19 +118,20 @@ void PropNode::Draw(base::FrameDef* frame_def) {
     c.SetReflectionScale(reflection_scale_r_, reflection_scale_g_,
                          reflection_scale_b_);
   }
-  if (flashing_ && frame_def->frame_number() % 10 < 5) {
+  if (flashing_ && frame_def->frame_number_filtered() % 10 < 5) {
     c.SetColor(1.2f, 1.2f, 1.2f);
   }
-  c.PushTransform();
-  body_->ApplyToRenderComponent(&c);
-  float s = mesh_scale_ * extra_mesh_scale_;
-  c.Scale(s, s, s);
-  c.DrawMeshAsset(mesh_->mesh_data());
-  c.PopTransform();
+  {
+    auto xf = c.ScopedTransform();
+    body_->ApplyToRenderComponent(&c);
+    float s = mesh_scale_ * extra_mesh_scale_;
+    c.Scale(s, s, s);
+    c.DrawMeshAsset(mesh_->mesh_data());
+  }
   c.Submit();
 
-  {  // shadow
-    assert(body_.Exists());
+  {  // Shadow.
+    assert(body_.exists());
     const dReal* pos_raw = dGeomGetPosition(body_->geom());
     float pos[3];
     pos[0] = pos_raw[0] + body_->blend_offset().x;
@@ -155,53 +160,54 @@ void PropNode::Draw(base::FrameDef* frame_def) {
 
       if (quality > base::GraphicsQuality::kLow) {
         // More sharp accurate shadow.
-        if (light_mesh_.Exists()) {
+        if (light_mesh_.exists()) {
           base::SimpleComponent c2(frame_def->light_shadow_pass());
           c2.SetTransparent(true);
           float dd = body_type_ == BodyType::LANDMINE ? 0.5f : 1.0f;
           c2.SetColor(0.3f, 0.2f, 0.1f, 0.08f * s_density * dd);
-          c2.PushTransform();
-          body_->ApplyToRenderComponent(&c2);
-          float ss = body_type_ == BodyType::LANDMINE ? 0.9f : 1.0f;
-          for (int i = 0; i < 4; i++) {
-            c2.PushTransform();
-            float s2 = ss * mesh_scale_ * extra_mesh_scale_
-                       * (1.3f - 0.08f * static_cast<float>(i));
-            c2.Scale(s2, s2, s2);
-            c2.DrawMeshAsset(light_mesh_->mesh_data());
-            c2.PopTransform();
+          {
+            auto x2 = c2.ScopedTransform();
+            body_->ApplyToRenderComponent(&c2);
+            float ss = body_type_ == BodyType::LANDMINE ? 0.9f : 1.0f;
+            for (int i = 0; i < 4; i++) {
+              auto xf = c2.ScopedTransform();
+              float s2 = ss * mesh_scale_ * extra_mesh_scale_
+                         * (1.3f - 0.08f * static_cast<float>(i));
+              c2.Scale(s2, s2, s2);
+              c2.DrawMeshAsset(light_mesh_->mesh_data());
+            }
           }
-          c2.PopTransform();
           c2.Submit();
         }
 
         // In fancy-pants mode we can do a softened version of ourself
         // for fake caustic effects.
-        if (light_mesh_.Exists()) {
-          assert(color_texture_.Exists());
+        if (light_mesh_.exists()) {
+          assert(color_texture_.exists());
           base::SimpleComponent c2(frame_def->light_shadow_pass());
           c2.SetTransparent(true);
           c2.SetPremultiplied(true);
-          c2.SetTexture(color_texture_.Exists() ? color_texture_->texture_data()
+          c2.SetTexture(color_texture_.exists() ? color_texture_->texture_data()
                                                 : nullptr);
-          if (flashing_ && frame_def->frame_number() % 10 < 5) {
+          if (flashing_ && frame_def->frame_number_filtered() % 10 < 5) {
             c2.SetColor(0.026f * s_density, 0.026f * s_density,
                         0.026f * s_density, 0.0f);
           } else {
             c2.SetColor(0.022f * s_density, 0.022f * s_density,
                         0.022f * s_density, 0.0f);
           }
-          c2.PushTransform();
-          body_->ApplyToRenderComponent(&c2);
-          for (int i = 0; i < 4; i++) {
-            c2.PushTransform();
-            float s2 = mesh_scale_ * extra_mesh_scale_ * 1.7f;
-            c2.Scale(s2, s2, s2);
-            c2.Rotate(-50.0f + 43.0f * static_cast<float>(i), 0.2f, 0.4f, 0.6f);
-            c2.DrawMeshAsset(light_mesh_->mesh_data());
-            c2.PopTransform();
+          {
+            auto xf = c2.ScopedTransform();
+            body_->ApplyToRenderComponent(&c2);
+            for (int i = 0; i < 4; i++) {
+              auto xf = c2.ScopedTransform();
+              float s2 = mesh_scale_ * extra_mesh_scale_ * 1.7f;
+              c2.Scale(s2, s2, s2);
+              c2.Rotate(-50.0f + 43.0f * static_cast<float>(i), 0.2f, 0.4f,
+                        0.6f);
+              c2.DrawMeshAsset(light_mesh_->mesh_data());
+            }
           }
-          c2.PopTransform();
           c2.Submit();
         }
       }
@@ -234,7 +240,7 @@ auto PropNode::GetBody() const -> std::string {
 
 void PropNode::SetBodyScale(float val) {
   // this can be set exactly once
-  if (body_.Exists()) {
+  if (body_.exists()) {
     throw Exception("body_scale can't be set once body exists");
   }
   body_scale_ = std::max(0.01f, val);
@@ -266,10 +272,10 @@ void PropNode::SetBody(const std::string& val) {
   }
 
   // we're ok with redundant sets, but complain/ignore if they try to switch..
-  if (body_.Exists()) {
+  if (body_.exists()) {
     if (body_type_ != body_type || shape_ != shape) {
-      Log(LogLevel::kError,
-          "body attr can not be changed from its initial value");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "body attr can not be changed from its initial value");
       return;
     }
   }
@@ -324,7 +330,7 @@ void PropNode::UpdateAreaOfInterest() {
   if (!aoi) {
     return;
   }
-  assert(body_.Exists());
+  assert(body_.exists());
   aoi->set_position(Vector3f(dGeomGetPosition(body_->geom())));
   aoi->SetRadius(5.0f);
 }
@@ -365,7 +371,7 @@ void PropNode::SetMaterials(const std::vector<Material*>& vals) {
 
 auto PropNode::GetVelocity() const -> std::vector<float> {
   // if we've got a body, return its velocity
-  if (body_.Exists()) {
+  if (body_.exists()) {
     const dReal* v = dBodyGetLinearVel(body_->body());
     std::vector<float> vv(3);
     vv[0] = v[0];
@@ -385,7 +391,7 @@ void PropNode::SetVelocity(const std::vector<float>& vals) {
                     PyExcType::kValue);
   }
   // if we've got a body, apply the velocity to that
-  if (body_.Exists()) {
+  if (body_.exists()) {
     dBodySetLinearVel(body_->body(), vals[0], vals[1], vals[2]);
   } else {
     // otherwise just store it in our internal vector in
@@ -396,7 +402,7 @@ void PropNode::SetVelocity(const std::vector<float>& vals) {
 
 auto PropNode::GetPosition() const -> std::vector<float> {
   // if we've got a body, return its position
-  if (body_.Exists()) {
+  if (body_.exists()) {
     const dReal* p = dGeomGetPosition(body_->geom());
     std::vector<float> f(3);
     f[0] = p[0];
@@ -417,7 +423,7 @@ void PropNode::SetPosition(const std::vector<float>& vals) {
                     PyExcType::kValue);
   }
   // if we've got a body, apply the position to that
-  if (body_.Exists()) {
+  if (body_.exists()) {
     dBodySetPosition(body_->body(), vals[0], vals[1], vals[2]);
   } else {
     // otherwise just store it in our internal vector
@@ -430,20 +436,21 @@ void PropNode::Step() {
   if (body_type_ == BodyType::UNSET) {
     if (!reported_unset_body_type_) {
       reported_unset_body_type_ = true;
-      Log(LogLevel::kError, "prop-node " + GetObjectDescription()
-                                + " did not have its 'body' attr set.");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "prop-node " + GetObjectDescription()
+                      + " did not have its 'body' attr set.");
       return;
     }
   }
   BA_DEBUG_CHECK_BODIES();
 
-  assert(body_.Exists());
+  assert(body_.exists());
 
   // FIXME - this should probably happen for RBDs automatically?...
   body_->UpdateBlending();
 
   // on happy thoughts, keep us on the 2d plane..
-  if (g_base->graphics->camera()->happy_thoughts_mode() && body_.Exists()) {
+  if (g_base->graphics->camera()->happy_thoughts_mode() && body_.exists()) {
     dBodyID b;
     const dReal *p, *v;
     b = body_->body();
@@ -485,7 +492,7 @@ void PropNode::Step() {
   }
 
   // if we're out of bounds, arrange to have ourself informed
-  if (body_.Exists()) {
+  if (body_.exists()) {
     const dReal* p = dBodyGetPosition(body_->body());
     if (scene()->IsOutOfBounds(p[0], p[1], p[2])) {
       scene()->AddOutOfBoundsNode(this);
@@ -493,7 +500,7 @@ void PropNode::Step() {
   }
 
   // adding new attribute as angularvel for angular velocity which is actually rotation force
-  if (body_.Exists()) {
+  if (body_.exists()) {
     if (angular_velocity_.size() != 3) {
     throw Exception("Expected float array of size 3 for velocity",
                     PyExcType::kValue);
@@ -546,7 +553,7 @@ void PropNode::Step() {
 
 auto PropNode::GetRigidBody(int id) -> RigidBody* {
   if (id == 0) {
-    return body_.Get();
+    return body_.get();
   }
   return nullptr;
 }
@@ -564,9 +571,9 @@ auto PropNode::CollideCallback(dContact* c, int count,
     // this should never happen, right?..
     assert(opposingbody->part()->node() != nullptr);
 
-    if ((stick_to_owner_ || opposingbody->part()->node() != owner_.Get())
+    if ((stick_to_owner_ || opposingbody->part()->node() != owner_.get())
         && !(f & RigidBody::kIsBumper)) {
-      if (body_.Exists()) {
+      if (body_.exists()) {
         // stick to static stuff:
         if (opposingbody->type() == RigidBody::Type::kGeomOnly) {
           const dReal* v;
@@ -584,7 +591,7 @@ auto PropNode::CollideCallback(dContact* c, int count,
           dBodyGetMass(b2, &m);
           dJointID j =
               dJointCreateFixed(scene()->dynamics()->ode_world(),
-                                scene()->dynamics()->getContactGroup());
+                                scene()->dynamics()->ode_contact_group());
           dJointAttach(j, b1, b2);
           dJointSetFixed(j);
           dJointSetFixedSpringMode(j, 1, 1, false);
@@ -721,7 +728,7 @@ void PropNode::GetRigidBodyPickupLocations(int id, float* obj, float* character,
 }
 
 void PropNode::SetDensity(float val) {
-  if (body_.Exists()) {
+  if (body_.exists()) {
     throw Exception("can't set density after body has been set");
   }
   density_ = std::max(0.01f, std::min(100.0f, val));
